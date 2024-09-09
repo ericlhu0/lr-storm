@@ -213,6 +213,8 @@ def create_dataset(robot_name):
                 },
                 join_path(checkpoints_dir,
                           robot_name+'_self_sdf.pt'))
+            print('saved path', join_path(checkpoints_dir,
+                          robot_name+'_self_sdf.pt'))
             min_loss = val_loss
         print(e, train_loss, val_loss.item())
 
@@ -232,7 +234,7 @@ def create_dataset(robot_name):
         print(loss.item())
             
 if __name__=='__main__':
-    create_dataset('franka')
+    create_dataset('lr_vel')
     # load robot model
     
     # load dataset

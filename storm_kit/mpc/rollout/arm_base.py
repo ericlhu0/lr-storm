@@ -55,6 +55,7 @@ class ArmBase(RolloutBase):
         # initialize dynamics model:
         dynamics_horizon = mppi_params['horizon'] * model_params['dt']
         #Create the dynamical system used for rollouts
+        print('path thing', join_path(assets_path,exp_params['model']['urdf_path']))
         self.dynamics_model = URDFKinematicModel(join_path(assets_path,exp_params['model']['urdf_path']),
                                                  dt=exp_params['model']['dt'],
                                                  batch_size=mppi_params['num_particles'],
@@ -224,6 +225,8 @@ class ArmBase(RolloutBase):
         #print(act_seq)
         #print('step...')
         with profiler.record_function("robot_model"):
+            print('start state',start_state.shape)
+            print('act_seq',act_seq.shape)
             state_dict = self.dynamics_model.rollout_open_loop(start_state, act_seq)
         
         

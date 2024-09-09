@@ -56,6 +56,7 @@ class URDFKinematicModel(DynamicsModelBase):
         #Variables for enforcing joint limits
         self.joint_names = self.urdfpy_robot.actuated_joint_names
         self.joint_lim_dicts = self.robot_model.get_joint_limits()
+        print('joint limits:', self.joint_lim_dicts)
         self.state_upper_bounds = torch.zeros(self.d_state, device=self.device, dtype=self.float_dtype)
         self.state_lower_bounds = torch.zeros(self.d_state, device=self.device, dtype=self.float_dtype)
         for i in range(self.n_dofs):

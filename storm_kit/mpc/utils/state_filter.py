@@ -22,6 +22,7 @@
 # DEALINGS IN THE SOFTWARE.#
 import numpy as np
 import copy
+from ...util_limb_repo import LRState, ABState
 
 class AlphaBetaFilter(object):
     def __init__(self, filter_coeff=0.4):
@@ -71,6 +72,7 @@ class JointStateFilter(object):
         self.dt = dt
         self.filter_keys = filter_keys
         self.prev_cmd_qdd = None
+        self.prev_cmd_qd = None
     def filter_joint_state(self, raw_joint_state):
         if(self.cmd_joint_state is None):
             self.cmd_joint_state = copy.deepcopy(raw_joint_state)
@@ -80,6 +82,8 @@ class JointStateFilter(object):
             self.cmd_joint_state[k] = self.filter_coeff[k] * raw_joint_state[k] + (1.0 - self.filter_coeff[k]) * self.cmd_joint_state[k]
 
         return self.cmd_joint_state
+    
+
 
     def forward_predict_internal_state(self, dt=None):
         if(self.prev_cmd_qdd is None):
@@ -118,12 +122,12 @@ class JointStateFilter(object):
         self.prev_cmd_qdd = self.cmd_joint_state['acceleration']
         return self.cmd_joint_state
 
-    def integrate_vel(self, qd_des, raw_joint_state, dt=None):
+    def integrate_vel(self, qd_des, raw_joint_state=None, dt=None):
         dt = self.dt if dt is None else dt
-        self.filter_joint_state(raw_joint_state)
-        self.cmd_joint_state['velocity'] = qd_des #self.cmd_joint_state['velocity'] + qdd_des * dt
+        self.cmd_joint_state['velocity'] = qd_des
         self.cmd_joint_state['position'] = self.cmd_joint_state['position'] + self.cmd_joint_state['velocity'] * dt
-
+        self.cmd_joint_state['acceleration'] = (self.cmd_joint_state['velocity'] - self.prev_cmd_qd) / dt
+        self.prev_cmd_qd = self.cmd_joint_state['velocity']
         return self.cmd_joint_state
 
     def integrate_pos(self, q_des, raw_joint_state, dt=None):

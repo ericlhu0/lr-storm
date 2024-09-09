@@ -60,9 +60,15 @@ from storm_kit.util_file import get_mpc_configs_path as mpc_configs_path
 
 from storm_kit.differentiable_robot_model.coordinate_transform import quaternion_to_matrix, CoordinateTransform
 from storm_kit.mpc.task.reacher_task import ReacherTask
+from storm_kit.mpc.task.lr_task import LimbRepoTask
+
+
+from storm_kit.util_limb_repo import LRUtils, LRState
+
 np.set_printoptions(precision=2)
 
 def mpc_robot_interactive(args, gym_instance):
+
     vis_ee_target = True
     robot_file = args.robot + '.yml'
     task_file = args.robot + '_reacher.yml'
@@ -71,6 +77,7 @@ def mpc_robot_interactive(args, gym_instance):
     
     gym = gym_instance.gym
     sim = gym_instance.sim
+
     world_yml = join_path(get_gym_configs_path(), world_file)
     with open(world_yml) as file:
         world_params = yaml.load(file, Loader=yaml.FullLoader)
@@ -78,16 +85,14 @@ def mpc_robot_interactive(args, gym_instance):
     robot_yml = join_path(get_gym_configs_path(),args.robot + '.yml')
     with open(robot_yml) as file:
         robot_params = yaml.load(file, Loader=yaml.FullLoader)
+
     sim_params = robot_params['sim_params']
     sim_params['asset_root'] = get_assets_path()
-    if(args.cuda):
-        device = 'cuda'
-    else:
-        device = 'cpu'
-
     sim_params['collision_model'] = None
+    device = 'cuda' if args.cuda else 'cpu'
+
     # create robot simulation:
-    robot_sim = RobotSim(gym_instance=gym, sim_instance=sim, **sim_params, device=device)
+    robot_sim = RobotSim(device=device, gym_instance=gym, sim_instance=sim, **sim_params)
 
     
     # create gym environment:
@@ -95,7 +100,7 @@ def mpc_robot_interactive(args, gym_instance):
     env_ptr = gym_instance.env_list[0]
     robot_ptr = robot_sim.spawn_robot(env_ptr, robot_pose, coll_id=2)
 
-    device = torch.device('cuda', 0) 
+    device = torch.device('cuda', 0)
 
     
     tensor_args = {'device':device, 'dtype':torch.float32}
@@ -123,24 +128,7 @@ def mpc_robot_interactive(args, gym_instance):
     world_instance = World(gym, sim, env_ptr, world_params, w_T_r=w_T_r)
     
 
-    
-    table_dims = np.ravel([1.5,2.5,0.7])
-    cube_pose = np.ravel([0.35, -0.0,-0.35,0.0, 0.0, 0.0,1.0])
-    
-
-
-    cube_pose = np.ravel([0.9,0.3,0.4, 0.0, 0.0, 0.0,1.0])
-    
-    table_dims = np.ravel([0.35,0.1,0.8])
-
-    
-    
-    cube_pose = np.ravel([0.35,0.3,0.4, 0.0, 0.0, 0.0,1.0])
-    
-    table_dims = np.ravel([0.3,0.1,0.8])
-    
-
-    # get camera data:
+    # exp_params is the task_file !!!
     mpc_control = ReacherTask(task_file, robot_file, world_file, tensor_args)
 
     n_dof = mpc_control.controller.rollout_fn.dynamics_model.n_dofs
@@ -149,8 +137,6 @@ def mpc_robot_interactive(args, gym_instance):
     start_qdd = torch.zeros(n_dof, **tensor_args)
 
     # update goal:
-
-    exp_params = mpc_control.exp_params
     
     current_state = copy.deepcopy(robot_sim.get_state(env_ptr, robot_ptr))
     ee_list = []
@@ -282,13 +268,10 @@ def mpc_robot_interactive(args, gym_instance):
             
             if(vis_ee_target):
                 gym.set_rigid_transform(env_ptr, ee_body_handle, copy.deepcopy(ee_pose))
-
-            print(["{:.3f}".format(x) for x in ee_error], "{:.3f}".format(mpc_control.opt_dt),
-                  "{:.3f}".format(mpc_control.mpc_dt))
         
             
             gym_instance.clear_lines()
-            top_trajs = mpc_control.top_trajs.cpu().float()#.numpy()
+            top_trajs = mpc_control.top_trajs.cpu().float()
             n_p, n_t = top_trajs.shape[0], top_trajs.shape[1]
             w_pts = w_robot_coord.transform_point(top_trajs.view(n_p * n_t, 3)).view(n_p, n_t, 3)
 

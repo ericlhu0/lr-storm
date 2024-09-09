@@ -38,6 +38,7 @@ import torch
 
 from .helpers import load_struct_from_dict
 from ..util_file import join_path
+from ..util_limb_repo import LRState
 
 def inv_transform(gym_transform):
     mat = np.eye(4)
@@ -155,6 +156,8 @@ class RobotSim():
         
         robot_dof_states = copy.deepcopy(self.gym.get_actor_dof_states(env_handle, robot_handle,
                                                                        gymapi.STATE_ALL))
+
+        print('num dofs', len(robot_dof_states['pos']))
 
         for i in range(len(robot_dof_states['pos'])):
             robot_dof_states['pos'][i] = self.init_state[i]

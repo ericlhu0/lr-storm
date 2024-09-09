@@ -200,7 +200,10 @@ class WorldPrimitiveCollision(WorldGridCollision):
     def load_collision_model(self, world_collision_params):
         
         world_objs = world_collision_params['coll_objs']
-        sphere_objs = world_objs['sphere']
+        if('sphere' in world_objs):
+            sphere_objs = world_objs['sphere']
+        else:
+            sphere_objs = []
         if('cube' in world_objs):
             cube_objs = world_objs['cube']
         else:

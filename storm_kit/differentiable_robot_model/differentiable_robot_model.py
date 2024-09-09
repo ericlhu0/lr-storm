@@ -548,6 +548,15 @@ class DifferentiableRobotModel(torch.nn.Module):
         Returns: ee_pos, ee_rot and linear and angular jacobian
 
         """
+
+        #############################################################
+        #                                                           #
+        #    Do NOT change to LRState because inputs are batched    #
+        #                                                           #
+        #############################################################
+
+        print('fk jac q', q)
+        print('fk jac qd', qd)
         # st=time.time()
         inp_device = q.device
         q = q.to(**self.tensor_args)

@@ -40,6 +40,7 @@ class Gym(object):
             physics_engine = gymapi.SIM_FLEX
         # create physics engine struct
         sim_engine_params = gymapi.SimParams()
+        sim_engine_params.up_axis = gymapi.UpAxis.UP_AXIS_Z
         
         # find params in kwargs and fill up here:
         sim_engine_params = load_struct_from_dict(sim_engine_params, sim_params)
@@ -135,25 +136,22 @@ class World(object):
 
         if(world_params is None):
             return
-        spheres = world_params['world_model']['coll_objs']['sphere']
-        for obj in spheres.keys():
-            radius = spheres[obj]['radius']
-            position = spheres[obj]['position']
+        
+        if('sphere' in world_params['world_model']['coll_objs']):
+            spheres = world_params['world_model']['coll_objs']['sphere']
+            for obj in spheres.keys():
+                radius = spheres[obj]['radius']
+                position = spheres[obj]['position']
 
-            
-            
-            # get pose
-            
-            object_pose = gymapi.Transform()
-            object_pose.p = gymapi.Vec3(position[0], position[1], position[2])
-            object_pose.r = gymapi.Quat(0, 0, 0,1)
-            object_pose = w_T_r * object_pose
+                # get pose
+                object_pose = gymapi.Transform()
+                object_pose.p = gymapi.Vec3(position[0], position[1], position[2])
+                object_pose.r = gymapi.Quat(0, 0, 0,1)
+                object_pose = w_T_r * object_pose
 
-            #
-
-            obj_asset = gym_instance.create_sphere(sim_instance,radius, asset_options)
-            obj_handle = gym_instance.create_actor(env_ptr, obj_asset, object_pose, obj, 2, 2, self.ENV_SEG_LABEL)
-            gym_instance.set_rigid_body_color(env_ptr, obj_handle, 0, gymapi.MESH_VISUAL_AND_COLLISION, obj_color)
+                obj_asset = gym_instance.create_sphere(sim_instance,radius, asset_options)
+                obj_handle = gym_instance.create_actor(env_ptr, obj_asset, object_pose, obj, 2, 2, self.ENV_SEG_LABEL)
+                gym_instance.set_rigid_body_color(env_ptr, obj_handle, 0, gymapi.MESH_VISUAL_AND_COLLISION, obj_color)
 
         if('cube' in world_params['world_model']['coll_objs']):
             cube = world_params['world_model']['coll_objs']['cube']

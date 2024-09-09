@@ -56,6 +56,13 @@ class RobotSelfCollisionNet():
             f_name (str): file name, this is relative to weights folder in this repo.
             tensor_args (Dict): device and dtype for pytorch tensors
         """        
+        # chk = torch.load(join_path(get_weights_path(), f_name))
+        # self.model.load_state_dict(chk["model_state_dict"])
+        # self.norm_dict = chk["norm"]
+        # for k in self.norm_dict.keys():
+        #     self.norm_dict[k]['mean'] = self.norm_dict[k]['mean'].to(**tensor_args)
+        #     self.norm_dict[k]['std'] = self.norm_dict[k]['std'].to(**tensor_args)
+
         try:
             chk = torch.load(join_path(get_weights_path(), f_name))
             self.model.load_state_dict(chk["model_state_dict"])

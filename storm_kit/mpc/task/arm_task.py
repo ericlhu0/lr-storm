@@ -37,10 +37,14 @@ class ArmTask(BaseTask):
     def __init__(self, task_file='ur10.yml', robot_file='ur10_reacher.yml', world_file='collision_env.yml', tensor_args={'device':"cpu", 'dtype':torch.float32}):
 
         super().__init__(tensor_args=tensor_args)
-        
-        
+
         self.controller = self.init_mppi(task_file, robot_file, world_file)
-        self.init_aux()
+        self.state_filter = JointStateFilter(filter_coeff=self.exp_params['state_filter_coeff'], dt=self.exp_params['control_dt'])
+        self.command_filter = JointStateFilter(filter_coeff=self.exp_params['cmd_filter_coeff'], dt=self.exp_params['control_dt'])
+        self.control_process = ControlProcess(self.controller)
+        self.n_dofs = self.controller.rollout_fn.dynamics_model.n_dofs
+        self.zero_acc = np.zeros(self.n_dofs)
+        
         
     def get_rollout_fn(self, **kwargs):
         rollout_fn = ArmBase(**kwargs)
@@ -77,9 +81,10 @@ class ArmTask(BaseTask):
             mppi_params['init_mean'] = init_action * 0.0 # device=device)
         elif(exp_params['control_space'] == 'pos'):
             mppi_params['init_mean'] = init_action
+        elif(exp_params['control_space'] == 'vel'):
+            mppi_params['init_mean'] = init_action * 0.0
         mppi_params['rollout_fn'] = rollout_fn
         mppi_params['tensor_args'] = self.tensor_args
         controller = MPPI(**mppi_params)
         self.exp_params = exp_params
         return controller
-
